@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>نسبة تغيّر الدولار</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,20 +63,23 @@
 
 * { box-sizing: border-box; }
 body {
+  margin: 0;
+  -webkit-text-size-adjust: 100%;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 15px;
   line-height: 1.6;
   direction: rtl;
-  padding-inline: 16px;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
   padding-block: 20px 40px;
 }
 .app { max-width: 1040px; margin-inline: auto; display: grid; gap: 20px; }
 header h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 4px; font-weight: 700; text-wrap: balance; }
 header p { margin: 0; color: var(--muted); max-width: 60ch; }
 
-.cols { display: grid; gap: 20px; align-items: start; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (min-width: 600px) and (max-width: 899px) { .app { max-width: 640px; } }
 @media (min-width: 900px) { .cols { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); } }
 .stack { display: grid; gap: 20px; min-width: 0; }
 
@@ -81,18 +89,18 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 
 label { display: block; font-size: 0.86rem; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
 input[type="text"], select, textarea {
-  width: 100%; font: inherit; color: var(--ink); background: var(--field);
+  width: 100%; font: inherit; font-size: 16px; color: var(--ink); background: var(--field);
   border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-height: 46px;
 }
 input.num, textarea.num { direction: ltr; text-align: right; font-family: var(--font-num); font-weight: 500; font-size: 1.15rem; }
-textarea.num { font-size: 0.95rem; min-height: 110px; resize: vertical; }
+textarea.num { font-size: 1rem; min-height: 110px; resize: vertical; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .hint { font-size: 0.82rem; color: var(--muted); margin: 8px 0 0; min-height: 1.3em; }
 .chip {
   font: inherit; font-size: 0.82rem; color: var(--ink); background: transparent;
-  border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer; min-height: 32px;
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer; min-height: 40px;
 }
 .chip:hover { border-color: var(--ink); }
 
@@ -123,7 +131,7 @@ textarea.num { font-size: 0.95rem; min-height: 110px; resize: vertical; }
 .gauge .seg { margin-inline-start: auto; }
 
 .seg { display: inline-flex; border: 1px solid #38424b; border-radius: 8px; overflow: hidden; }
-.seg button { font: inherit; font-size: 0.82rem; background: transparent; color: var(--panel-muted); border: 0; padding: 6px 12px; min-height: 36px; cursor: pointer; }
+.seg button { font: inherit; font-size: 0.82rem; background: transparent; color: var(--panel-muted); border: 0; padding: 6px 14px; min-height: 40px; cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
 
 /* impact */
@@ -145,7 +153,7 @@ details[open] summary { margin-bottom: 8px; }
 .entry .pct { font-family: var(--font-num); font-weight: 600; direction: ltr; text-align: left; }
 .entry .pct.up { color: var(--up); } .entry .pct.down { color: var(--down); }
 .entry .note { grid-column: 1 / -1; font-size: 0.84rem; color: var(--muted); overflow-wrap: anywhere; }
-.entry .del { grid-column: 2; font: inherit; font-size: 0.78rem; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 4px 0; text-align: end; }
+.entry .del { grid-column: 2; font: inherit; font-size: 0.85rem; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 10px 0; min-height: 40px; text-align: end; }
 .entry .del.sure { color: var(--up); font-weight: 600; }
 .empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 8px; padding: 16px; text-align: center; }
 .total { margin-top: 12px; font-size: 0.88rem; color: var(--muted); }
@@ -156,6 +164,8 @@ details[open] summary { margin-bottom: 8px; }
 #toast.on { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
 </style>
+</head>
+<body>
 
 <div class="app" lang="ar" dir="rtl">
   <header>
@@ -240,6 +250,26 @@ details[open] summary { margin-bottom: 8px; }
       <div id="log" class="log"></div>
       <div class="total" id="total"></div>
       <div class="store" id="store"></div>
+      <div style="margin-top:12px"><button class="btn ghost" id="copyLog" type="button">نسخ السجل للصقه في Excel</button></div>
+
+      <details id="sheetBox">
+        <summary>ربط السجل بـ Google Sheets</summary>
+        <p class="sub">كل تغيير تحفظه يُضاف كسطر جديد في الجدول مع التاريخ والوقت. الرابط والمفتاح يُحفظان على هذا الجهاز فقط.</p>
+        <div class="save-row">
+          <div>
+            <label for="sheetUrl">رابط Web App من Apps Script</label>
+            <input id="sheetUrl" class="num" type="text" autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:16px">
+          </div>
+          <div>
+            <label for="sheetKey">المفتاح السري</label>
+            <input id="sheetKey" class="num" type="text" autocomplete="off" style="font-size:16px">
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap">
+            <button class="btn" id="sheetSave" type="button">حفظ واختبار الاتصال</button>
+            <button class="btn ghost" id="sheetOff" type="button">فصل الربط</button>
+          </div>
+        </div>
+      </details>
     </section>
   </div>
 </div>
@@ -265,11 +295,19 @@ details[open] summary { margin-bottom: 8px; }
   function rate() {
     var o = num($('old').value), n = num($('new').value);
     if (!(o > 0) || !(n > 0) || !isFinite(o) || !isFinite(n)) return null;
-    var exact = (n / o - 1) * 100;
-    var applied = Number(exact.toFixed(dp));
+    var exact = ((n - o) * 100) / o;
+    var applied = round(exact, dp);
     return { o: o, n: n, exact: exact, applied: applied };
   }
-  function roundTo(x, step) { return step > 0 ? Math.round(x / step) * step : x; }
+  /* decimal rounding that does not suffer from binary floating-point (e.g. 1.005 -> 1.01) */
+  function round(x, d) {
+    x = Number(x.toPrecision(12)); /* drops float noise such as 0.12499999999999956 */
+    var s = Math.abs(x).toString();
+    if (s.indexOf('e') >= 0) return Number(x.toFixed(d));
+    var r = Number(Math.round(Number(s + 'e' + d)) + 'e-' + d);
+    return x < 0 ? -r : r;
+  }
+  function roundTo(x, step) { return step > 0 ? Math.round(x / step + 1e-9) * step : x; }
 
   function toast(msg) {
     var t = $('toast'); t.textContent = msg; t.classList.add('on');
@@ -342,7 +380,7 @@ details[open] summary { margin-bottom: 8px; }
       var b1 = document.createElement('bdi'); b1.textContent = fmt(en.old, 2);
       var b2 = document.createElement('bdi'); b2.textContent = fmt(en.new, 2);
       rt.appendChild(b1); rt.appendChild(document.createTextNode(' ← ')); rt.appendChild(b2);
-      var wh = document.createElement('div'); wh.className = 'when'; wh.textContent = dateText(en.at);
+      var wh = document.createElement('div'); wh.className = 'when'; wh.textContent = dateText(en.at) + (en.pending ? ' • بانتظار الإرسال' : '');
       left.appendChild(rt); left.appendChild(wh);
       var pc = document.createElement('div');
       var a = Number(en.applied);
@@ -357,7 +395,7 @@ details[open] summary { margin-bottom: 8px; }
           setTimeout(function () { del.classList.remove('sure'); del.textContent = 'حذف'; }, 3000);
         } else removeEntry(en);
       });
-      row.appendChild(del);
+      if (mode !== 'sheet') row.appendChild(del);
       box.appendChild(row);
     });
     var first = entries[entries.length - 1], last = entries[0];
@@ -365,9 +403,9 @@ details[open] summary { margin-bottom: 8px; }
     $('total').innerHTML = 'التغيير التراكمي من أول تسجيل (<bdi>' + fmt(first.old, 2) + '</bdi> إلى <bdi>' + fmt(last.new, 2) + '</bdi>): <b>' + (cum > 0 ? '+' : '') + cum.toFixed(2) + '%</b>';
   }
   function renderStore() {
-    $('store').textContent = mode === 'db'
-      ? 'السجل محفوظ مع الصفحة، ويظهر على أي جهاز تفتح منه نفس الرابط.'
-      : 'السجل محفوظ على هذا الجهاز فقط.';
+    $('store').textContent = mode === 'sheet'
+      ? 'السجل مربوط بـ Google Sheets، كل تغيير يُضاف كسطر جديد.'
+      : 'السجل محفوظ على هذا الجهاز فقط. اربطه بـ Google Sheets ليظهر على كل الأجهزة.';
   }
   function offerLast() {
     if (!entries.length) { $('lastRow').hidden = true; return; }
@@ -389,27 +427,88 @@ details[open] summary { margin-bottom: 8px; }
   function localSave() { try { localStorage.setItem('usd-rate-log', JSON.stringify(entries)); } catch (e) {} }
 
   function removeEntry(en) {
-    if (mode === 'db') {
-      db.doc('rates/' + en.id).delete().then(function () { toast('تم حذف السجل'); }, function () { toast('تعذر الحذف'); });
-    } else {
-      entries = entries.filter(function (x) { return x.id !== en.id; }); localSave(); afterEntries(); toast('تم حذف السجل');
-    }
+    entries = entries.filter(function (x) { return x.id !== en.id; }); localSave(); afterEntries(); toast('تم حذف السجل');
   }
   function saveEntry() {
     var r = rate(); if (!r || saving) return;
     var at = Date.now();
-    var rec = { at: at, old: r.o, new: r.n, exact: r.exact, applied: r.applied, dp: dp, note: $('note').value.trim() };
+    var rec = { id: String(at), at: at, old: r.o, new: r.n, exact: r.exact, applied: r.applied, dp: dp, note: $('note').value.trim() };
     saving = true;
-    if (mode === 'db') {
-      db.doc('rates/' + at).set(rec).then(function () {
-        saving = false; $('note').value = ''; touched = false; toast('تم الحفظ في السجل');
-      }, function (e) {
-        saving = false; toast(e && e.code === 'invalid_argument' ? 'ليس لديك صلاحية الحفظ في هذه الصفحة' : 'تعذر الحفظ');
+    if (mode === 'sheet') {
+      sheetCall('add', { data: JSON.stringify(rec) }).then(function () {
+        saving = false; $('note').value = ''; touched = false;
+        toast('تم الحفظ في Google Sheets');
+        return loadSheet();
+      }, function () {
+        /* keep it in a queue; it is sent automatically on the next successful connection */
+        var p = readPending(); p.push(rec); writePending(p);
+        saving = false; $('note').value = ''; touched = false;
+        entries = mergePending(readCache());
+        afterEntries();
+        toast('تعذر الإرسال. حُفظ على الجهاز وسيُرسل تلقائياً عند عودة الاتصال');
       });
     } else {
-      rec.id = String(at); entries.unshift(rec); localSave(); saving = false;
+      var local = readLocal(); local.unshift(rec); writeLocal(local);
+      entries = local; saving = false;
       $('note').value = ''; touched = false; afterEntries(); toast('تم الحفظ على هذا الجهاز');
     }
+  }
+
+  /* ---------- Google Sheets ---------- */
+  function readLocal() {
+    var l; try { l = JSON.parse(localStorage.getItem('usd-rate-log') || '[]'); } catch (e) { l = []; }
+    return l.sort(function (a, b) { return b.at - a.at; });
+  }
+  function writeLocal(l) { try { localStorage.setItem('usd-rate-log', JSON.stringify(l)); } catch (e) {} }
+  function sheetCfg() {
+    try { return { url: localStorage.getItem('usd-sheet-url') || '', key: localStorage.getItem('usd-sheet-key') || '' }; }
+    catch (e) { return { url: '', key: '' }; }
+  }
+  function sheetCall(action, params) {
+    var c = sheetCfg();
+    var q = 'action=' + encodeURIComponent(action) + '&key=' + encodeURIComponent(c.key);
+    Object.keys(params || {}).forEach(function (k) { q += '&' + k + '=' + encodeURIComponent(params[k]); });
+    return fetch(c.url + (c.url.indexOf('?') < 0 ? '?' : '&') + q).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j || !j.ok) throw new Error((j && j.error) || 'failed');
+      return j;
+    });
+  }
+  function readJson(k) { try { var v = JSON.parse(localStorage.getItem(k) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+  function writeJson(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function readPending() { return readJson('usd-rate-pending'); }
+  function writePending(v) { writeJson('usd-rate-pending', v); }
+  function readCache() { return readJson('usd-sheet-cache'); }
+  /* sheet rows plus entries still waiting to be sent, newest first */
+  function mergePending(rows) {
+    var ids = {}; rows.forEach(function (r) { ids[r.id] = true; });
+    var p = readPending().filter(function (x) { return !ids[x.id]; }).map(function (x) { x.pending = true; return x; });
+    return p.concat(rows).sort(function (a, b) { return b.at - a.at; });
+  }
+  function flushPending() {
+    var p = readPending(), sent = 0, chain = Promise.resolve();
+    p.forEach(function (rec) {
+      chain = chain.then(function () {
+        return sheetCall('add', { data: JSON.stringify(rec) }).then(function () {
+          writePending(readPending().filter(function (x) { return x.id !== rec.id; })); sent++;
+        }, function () {});
+      });
+    });
+    return chain.then(function () { return sent; });
+  }
+  function loadSheet() {
+    return flushPending().then(function (n) {
+      if (n) toast('أُرسل ' + n + ' تغيير كان بانتظار الاتصال');
+      return sheetCall('list');
+    }).then(function (j) {
+      var rows = (j.rows || []).map(function (r) {
+        return { id: String(r.id), at: Number(r.at), old: Number(r.old), new: Number(r.new), exact: Number(r.exact), applied: Number(r.applied), note: String(r.note || '') };
+      }).filter(function (r) { return r.old > 0 && r.new > 0 && isFinite(r.at); });
+      writeJson('usd-sheet-cache', rows);
+      mode = 'sheet'; entries = mergePending(rows); afterEntries();
+    }, function () {
+      mode = 'sheet'; entries = mergePending(readCache()); afterEntries();
+      toast('تعذر الاتصال بـ Google Sheets. يعرض آخر نسخة محفوظة');
+    });
   }
 
   /* ---------- events ---------- */
@@ -445,17 +544,46 @@ details[open] summary { margin-bottom: 8px; }
 
   /* ---------- boot ---------- */
   renderCalc(); renderLog(); renderStore();
-  function startLocal() { mode = 'local'; localLoad(); afterEntries(); }
-  var usePromise = (window.claude && window.claude.use) ? window.claude.use('db') : Promise.resolve(null);
-  usePromise.then(function (d) {
-    if (!d) { startLocal(); return; }
-    db = d; mode = 'db';
-    try {
-      db.collection('rates').orderBy('at', 'desc').limit(300).onSnapshot(function (snap) {
-        entries = snap.docs.map(function (x) { var v = x.data(); v.id = x.id; return v; });
-        afterEntries();
-      }, function () { startLocal(); });
-    } catch (e) { startLocal(); }
-  }, startLocal);
+  function startLocal() { mode = 'local'; entries = readLocal(); afterEntries(); }
+  var cfg = sheetCfg();
+  $('sheetUrl').value = cfg.url; $('sheetKey').value = cfg.key;
+  if (cfg.url) { mode = 'sheet'; loadSheet(); } else startLocal();
+
+  $('sheetSave').addEventListener('click', function () {
+    var u = $('sheetUrl').value.trim(), k = $('sheetKey').value.trim();
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(u)) { toast('الرابط يجب أن ينتهي بـ /exec'); return; }
+    var old = sheetCfg();
+    try { localStorage.setItem('usd-sheet-url', u); localStorage.setItem('usd-sheet-key', k); } catch (e) {}
+    sheetCall('list').then(function () {
+      /* move anything saved on this device before linking into the sheet */
+      var local = readLocal();
+      if (local.length) { writePending(readPending().concat(local)); writeLocal([]); }
+      toast('تم الربط بنجاح');
+      return loadSheet();
+    }, function () {
+      try { localStorage.setItem('usd-sheet-url', old.url); localStorage.setItem('usd-sheet-key', old.key); } catch (e) {}
+      toast('فشل الاتصال. راجع الرابط والمفتاح وصلاحية Anyone');
+    });
+  });
+  $('sheetOff').addEventListener('click', function () {
+    /* entries still waiting to be sent go back to this device's own log */
+    var p = readPending();
+    if (p.length) { writeLocal(readLocal().concat(p)); writePending([]); }
+    try { localStorage.removeItem('usd-sheet-url'); localStorage.removeItem('usd-sheet-key'); localStorage.removeItem('usd-sheet-cache'); } catch (e) {}
+    $('sheetUrl').value = ''; $('sheetKey').value = ''; startLocal(); toast('تم فصل الربط');
+  });
+  $('copyLog').addEventListener('click', function () {
+    if (!entries.length) { toast('السجل فارغ'); return; }
+    var head = ['التاريخ', 'سعر قديم', 'سعر جديد', 'النسبة %', 'ملاحظة'].join('\t');
+    var rows = entries.slice().reverse().map(function (e) {
+      return [dateText(e.at), e.old, e.new, e.applied, (e.note || '').replace(/[\t\r\n]+/g, ' ')].join('\t');
+    });
+    var text = [head].concat(rows).join('\n');
+    try { navigator.clipboard.writeText(text).then(function () { toast('تم النسخ، الصقه في Excel'); }, function () { toast('تعذر النسخ'); }); }
+    catch (e) { toast('تعذر النسخ'); }
+  });
 })();
 </script>
+
+</body>
+</html>

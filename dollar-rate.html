@@ -1,0 +1,461 @@
+<title>نسبة تغيّر الدولار</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one column on phone; on desktop the calculator and impact preview sit right, the rate log sits left.
+   Palette: steel-grey ground, tape-measure yellow accent, dark gauge panel for the result. */
+:root {
+  --bg: #e8ebed;
+  --surface: #f7f8f9;
+  --ink: #161b20;
+  --muted: #58636d;
+  --line: #cdd3d8;
+  --accent: #f2b705;
+  --on-accent: #1a1500;
+  --focus: #1a1500;
+  --up: #a8431c;
+  --down: #1d7a50;
+  --panel: #1b2127;
+  --panel-ink: #f1f3f5;
+  --panel-muted: #9aa6b0;
+  --field: #ffffff;
+  --font-body: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1317;
+    --surface: #171c21;
+    --ink: #e8ecef;
+    --muted: #93a0aa;
+    --line: #2a323a;
+    --focus: #f2b705;
+    --up: #f08c64;
+    --down: #57c48f;
+    --panel: #0a0d10;
+    --panel-ink: #f1f3f5;
+    --panel-muted: #8f9ba5;
+    --field: #0f1317;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1317;
+  --surface: #171c21;
+  --ink: #e8ecef;
+  --muted: #93a0aa;
+  --line: #2a323a;
+  --focus: #f2b705;
+  --up: #f08c64;
+  --down: #57c48f;
+  --panel: #0a0d10;
+  --panel-ink: #f1f3f5;
+  --panel-muted: #8f9ba5;
+  --field: #0f1317;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  direction: rtl;
+  padding-inline: 16px;
+  padding-block: 20px 40px;
+}
+.app { max-width: 1040px; margin-inline: auto; display: grid; gap: 20px; }
+header h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 4px; font-weight: 700; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); max-width: 60ch; }
+
+.cols { display: grid; gap: 20px; align-items: start; }
+@media (min-width: 900px) { .cols { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); } }
+.stack { display: grid; gap: 20px; min-width: 0; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; min-width: 0; }
+.card h2 { font-size: 1.05rem; margin: 0 0 12px; font-weight: 600; }
+.sub { color: var(--muted); font-size: 0.86rem; margin: -6px 0 12px; }
+
+label { display: block; font-size: 0.86rem; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
+input[type="text"], select, textarea {
+  width: 100%; font: inherit; color: var(--ink); background: var(--field);
+  border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-height: 46px;
+}
+input.num, textarea.num { direction: ltr; text-align: right; font-family: var(--font-num); font-weight: 500; font-size: 1.15rem; }
+textarea.num { font-size: 0.95rem; min-height: 110px; resize: vertical; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.hint { font-size: 0.82rem; color: var(--muted); margin: 8px 0 0; min-height: 1.3em; }
+.chip {
+  font: inherit; font-size: 0.82rem; color: var(--ink); background: transparent;
+  border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer; min-height: 32px;
+}
+.chip:hover { border-color: var(--ink); }
+
+/* result gauge */
+.gauge { background: var(--panel); color: var(--panel-ink); border-radius: 10px; padding: 26px 18px 18px; position: relative; overflow: hidden; }
+.gauge::before {
+  content: ""; position: absolute; inset-inline: 0; top: 0; height: 12px;
+  background:
+    repeating-linear-gradient(90deg, var(--accent) 0 2px, transparent 2px 40px),
+    repeating-linear-gradient(90deg, var(--accent) 0 1px, transparent 1px 8px);
+  background-size: 100% 100%, 100% 55%; background-repeat: no-repeat, repeat-x;
+  opacity: 0.95;
+}
+.gauge .lbl { color: var(--panel-muted); font-size: 0.86rem; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.dir { font-size: 0.78rem; font-weight: 600; padding: 1px 10px; border-radius: 999px; background: #2b343c; color: var(--panel-ink); }
+.dir.up { color: #f6a584; } .dir.down { color: #72d3a3; }
+.big { direction: ltr; text-align: right; font-family: var(--font-num); font-weight: 600; font-size: clamp(2.8rem, 12vw, 4.4rem); line-height: 1.1; margin: 6px 0 2px; word-break: break-all; }
+.big small { font-size: 0.5em; color: var(--accent); margin-inline-start: 4px; }
+.exact { color: var(--panel-muted); font-size: 0.84rem; direction: rtl; }
+.exact bdi { font-family: var(--font-num); }
+.gauge-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+.btn {
+  font: inherit; font-weight: 600; cursor: pointer; border: 0; border-radius: 8px;
+  padding: 10px 18px; min-height: 46px; background: var(--accent); color: var(--on-accent);
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 500; }
+.gauge .seg { margin-inline-start: auto; }
+
+.seg { display: inline-flex; border: 1px solid #38424b; border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 0.82rem; background: transparent; color: var(--panel-muted); border: 0; padding: 6px 12px; min-height: 36px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+
+/* impact */
+.rows { display: grid; gap: 8px; margin-top: 12px; }
+.kv { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding-block: 6px; border-bottom: 1px dashed var(--line); }
+.kv:last-child { border-bottom: 0; }
+.kv span:first-child { color: var(--muted); font-size: 0.9rem; }
+.kv b { font-family: var(--font-num); direction: ltr; font-variant-numeric: tabular-nums; font-weight: 600; }
+details { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+summary { cursor: pointer; font-weight: 600; min-height: 32px; }
+details[open] summary { margin-bottom: 8px; }
+
+/* history */
+.save-row { display: grid; gap: 10px; margin-bottom: 14px; }
+.log { display: grid; gap: 0; }
+.entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--line); align-items: center; }
+.entry .when { font-size: 0.8rem; color: var(--muted); }
+.entry .rate { font-family: var(--font-num); font-weight: 500; font-variant-numeric: tabular-nums; }
+.entry .pct { font-family: var(--font-num); font-weight: 600; direction: ltr; text-align: left; }
+.entry .pct.up { color: var(--up); } .entry .pct.down { color: var(--down); }
+.entry .note { grid-column: 1 / -1; font-size: 0.84rem; color: var(--muted); overflow-wrap: anywhere; }
+.entry .del { grid-column: 2; font: inherit; font-size: 0.78rem; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 4px 0; text-align: end; }
+.entry .del.sure { color: var(--up); font-weight: 600; }
+.empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 8px; padding: 16px; text-align: center; }
+.total { margin-top: 12px; font-size: 0.88rem; color: var(--muted); }
+.total b { font-family: var(--font-num); color: var(--ink); direction: ltr; unicode-bidi: isolate; }
+.store { font-size: 0.78rem; color: var(--muted); margin-top: 10px; }
+
+#toast { position: fixed; inset-inline: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin-inline: auto; max-width: 340px; text-align: center; background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; opacity: 0; pointer-events: none; transition: opacity .2s; }
+#toast.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+</style>
+
+<div class="app" lang="ar" dir="rtl">
+  <header>
+    <h1>نسبة تغيّر الدولار</h1>
+    <p>أدخل سعر الدولار القديم والجديد، وانسخ النسبة إلى التحديث الجماعي في دفترة. أسعار البيع تبقى بالدينار العراقي.</p>
+  </header>
+
+  <div class="cols">
+    <div class="stack">
+      <section class="card" aria-labelledby="h-calc">
+        <h2 id="h-calc">حساب النسبة</h2>
+        <div class="pair">
+          <div>
+            <label for="old">سعر الدولار القديم</label>
+            <input id="old" class="num" type="text" inputmode="decimal" autocomplete="off" value="1500">
+          </div>
+          <div>
+            <label for="new">سعر الدولار الجديد</label>
+            <input id="new" class="num" type="text" inputmode="decimal" autocomplete="off" value="1600">
+          </div>
+        </div>
+        <p class="hint" id="hint">القيمتان الآن مثال: 1500 إلى 1600. يمكنك أيضاً إدخال السعر لكل 100 دولار، والنسبة تبقى نفسها.</p>
+        <div style="margin-top:10px" id="lastRow" hidden>
+          <button class="chip" id="useLast" type="button"></button>
+        </div>
+
+        <div class="gauge" style="margin-top:16px" aria-live="polite">
+          <div class="lbl"><span>النسبة الجاهزة للإدخال في دفترة</span><span class="dir" id="dir">زيادة</span></div>
+          <div class="big" id="big"><span id="pctText">6.67</span><small>%</small></div>
+          <div class="exact" id="exact">النسبة الدقيقة <bdi>6.666667%</bdi></div>
+          <div class="gauge-actions">
+            <button class="btn" id="copy" type="button">نسخ النسبة</button>
+            <div class="seg" role="group" aria-label="عدد المنازل العشرية">
+              <button type="button" data-dp="1" aria-pressed="false">1</button>
+              <button type="button" data-dp="2" aria-pressed="true">2</button>
+              <button type="button" data-dp="3" aria-pressed="false">3</button>
+              <button type="button" data-dp="4" aria-pressed="false">4</button>
+            </div>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:12px">المعادلة: ((الجديد ÷ القديم) − 1) × 100. بدون هامش حماية.</p>
+      </section>
+
+      <section class="card" aria-labelledby="h-impact">
+        <h2 id="h-impact">معاينة الأثر على الأسعار</h2>
+        <p class="sub">جرّب منتجاً واحداً قبل تطبيق التحديث الجماعي.</p>
+        <div class="pair">
+          <div>
+            <label for="price">سعر المنتج الحالي (د.ع)</label>
+            <input id="price" class="num" type="text" inputmode="decimal" autocomplete="off" value="10000">
+          </div>
+          <div>
+            <label for="step">تقريب السعر الجديد</label>
+            <select id="step">
+              <option value="0">بدون تقريب</option>
+              <option value="250">إلى أقرب 250</option>
+              <option value="500">إلى أقرب 500</option>
+              <option value="1000">إلى أقرب 1,000</option>
+            </select>
+          </div>
+        </div>
+        <div class="rows" id="single"></div>
+
+        <details>
+          <summary>أثر التغيير على قائمة أسعار كاملة</summary>
+          <label for="bulk">الصق الأسعار من Excel، سعر في كل سطر</label>
+          <textarea id="bulk" class="num" placeholder="2500&#10;12000&#10;750"></textarea>
+          <div class="rows" id="bulkOut"></div>
+        </details>
+      </section>
+    </div>
+
+    <section class="card" aria-labelledby="h-log">
+      <h2 id="h-log">سجل تغييرات الدولار</h2>
+      <div class="save-row">
+        <div>
+          <label for="note">ملاحظة (اختياري)</label>
+          <input id="note" type="text" maxlength="80" autocomplete="off" placeholder="مثال: قائمة المفرد">
+        </div>
+        <button class="btn" id="save" type="button">حفظ هذا التغيير في السجل</button>
+      </div>
+      <div id="log" class="log"></div>
+      <div class="total" id="total"></div>
+      <div class="store" id="store"></div>
+    </section>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var dp = 2, touched = false, entries = [], db = null, mode = 'local', saving = false;
+
+  function num(v) {
+    if (v == null) return NaN;
+    v = String(v)
+      .replace(/[٠-٩]/g, function (d) { return d.charCodeAt(0) - 0x660; })
+      .replace(/[۰-۹]/g, function (d) { return d.charCodeAt(0) - 0x6F0; })
+      .replace(/٫/g, '.').replace(/[,٬\s]/g, '');
+    return v === '' ? NaN : Number(v);
+  }
+  function fmt(n, d) {
+    return Number(n).toLocaleString('en-US', { minimumFractionDigits: d || 0, maximumFractionDigits: d == null ? 2 : d });
+  }
+  function pctString(r) { return Object.is(r, -0) || r === 0 ? '0' : String(r); }
+  function rate() {
+    var o = num($('old').value), n = num($('new').value);
+    if (!(o > 0) || !(n > 0) || !isFinite(o) || !isFinite(n)) return null;
+    var exact = (n / o - 1) * 100;
+    var applied = Number(exact.toFixed(dp));
+    return { o: o, n: n, exact: exact, applied: applied };
+  }
+  function roundTo(x, step) { return step > 0 ? Math.round(x / step) * step : x; }
+
+  function toast(msg) {
+    var t = $('toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(toast.h); toast.h = setTimeout(function () { t.classList.remove('on'); }, 2200);
+  }
+
+  function renderCalc() {
+    var r = rate(), dir = $('dir');
+    if (!r) {
+      $('pctText').textContent = '—'; $('exact').textContent = 'أدخل السعرين لحساب النسبة';
+      dir.textContent = ''; dir.className = 'dir'; dir.hidden = true;
+      $('copy').disabled = true; $('save').disabled = true;
+    } else {
+      dir.hidden = false;
+      $('pctText').textContent = (r.applied > 0 ? '+' : '') + pctString(r.applied);
+      $('exact').innerHTML = 'النسبة الدقيقة <bdi>' + (r.exact > 0 ? '+' : '') + r.exact.toFixed(6) + '%</bdi>';
+      if (r.applied > 0) { dir.textContent = 'زيادة'; dir.className = 'dir up'; }
+      else if (r.applied < 0) { dir.textContent = 'تخفيض'; dir.className = 'dir down'; }
+      else { dir.textContent = 'بدون تغيير'; dir.className = 'dir'; }
+      $('copy').disabled = false; $('save').disabled = false;
+    }
+    renderImpact();
+  }
+
+  function kv(label, value) {
+    var d = document.createElement('div'); d.className = 'kv';
+    var a = document.createElement('span'); a.textContent = label;
+    var b = document.createElement('b'); b.textContent = value;
+    d.appendChild(a); d.appendChild(b); return d;
+  }
+  function renderImpact() {
+    var r = rate(), step = Number($('step').value), p = num($('price').value);
+    var s = $('single'), b = $('bulkOut'); s.textContent = ''; b.textContent = '';
+    if (!r) { s.appendChild(kv('النتيجة', 'أدخل سعر الدولار أولاً')); return; }
+    var f = 1 + r.applied / 100;
+    if (p >= 0 && isFinite(p)) {
+      var viaPct = p * f, exactP = p * (1 + r.exact / 100), fin = roundTo(viaPct, step);
+      s.appendChild(kv('السعر الجديد بالنسبة المنسوخة', fmt(viaPct, 2) + ' د.ع'));
+      if (step > 0) s.appendChild(kv('بعد التقريب', fmt(fin, 0) + ' د.ع'));
+      s.appendChild(kv('الفرق بسبب تقريب النسبة', fmt(viaPct - exactP, 2) + ' د.ع'));
+    } else { s.appendChild(kv('النتيجة', 'أدخل سعر المنتج')); }
+
+    var lines = $('bulk').value.split(/\r?\n/).map(num).filter(function (x) { return isFinite(x) && x >= 0; });
+    if (lines.length) {
+      var so = 0, sn = 0;
+      lines.forEach(function (x) { so += x; sn += roundTo(x * f, step); });
+      b.appendChild(kv('عدد الأسعار', fmt(lines.length, 0)));
+      b.appendChild(kv('المجموع الحالي', fmt(so, 0) + ' د.ع'));
+      b.appendChild(kv('المجموع بعد التحديث', fmt(sn, 0) + ' د.ع'));
+      b.appendChild(kv('الفرق', (sn - so > 0 ? '+' : '') + fmt(sn - so, 0) + ' د.ع'));
+    }
+  }
+
+  /* ---------- history ---------- */
+  function dateText(ts) {
+    try { return new Date(ts).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+    catch (e) { return ''; }
+  }
+  function renderLog() {
+    var box = $('log'); box.textContent = '';
+    if (!entries.length) {
+      var e = document.createElement('div'); e.className = 'empty';
+      e.textContent = 'لا توجد تغييرات محفوظة. بعد حساب النسبة اضغط حفظ لتسجيل أول تغيير.';
+      box.appendChild(e); $('total').textContent = ''; return;
+    }
+    entries.forEach(function (en) {
+      var row = document.createElement('div'); row.className = 'entry';
+      var left = document.createElement('div');
+      var rt = document.createElement('div'); rt.className = 'rate';
+      var b1 = document.createElement('bdi'); b1.textContent = fmt(en.old, 2);
+      var b2 = document.createElement('bdi'); b2.textContent = fmt(en.new, 2);
+      rt.appendChild(b1); rt.appendChild(document.createTextNode(' ← ')); rt.appendChild(b2);
+      var wh = document.createElement('div'); wh.className = 'when'; wh.textContent = dateText(en.at);
+      left.appendChild(rt); left.appendChild(wh);
+      var pc = document.createElement('div');
+      var a = Number(en.applied);
+      pc.className = 'pct ' + (a > 0 ? 'up' : a < 0 ? 'down' : '');
+      pc.textContent = (a > 0 ? '+' : '') + pctString(a) + '%';
+      row.appendChild(left); row.appendChild(pc);
+      if (en.note) { var nt = document.createElement('div'); nt.className = 'note'; nt.textContent = en.note; row.appendChild(nt); }
+      var del = document.createElement('button'); del.type = 'button'; del.className = 'del'; del.textContent = 'حذف';
+      del.addEventListener('click', function () {
+        if (!del.classList.contains('sure')) {
+          del.classList.add('sure'); del.textContent = 'اضغط مرة ثانية للحذف';
+          setTimeout(function () { del.classList.remove('sure'); del.textContent = 'حذف'; }, 3000);
+        } else removeEntry(en);
+      });
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+    var first = entries[entries.length - 1], last = entries[0];
+    var cum = (last.new / first.old - 1) * 100;
+    $('total').innerHTML = 'التغيير التراكمي من أول تسجيل (<bdi>' + fmt(first.old, 2) + '</bdi> إلى <bdi>' + fmt(last.new, 2) + '</bdi>): <b>' + (cum > 0 ? '+' : '') + cum.toFixed(2) + '%</b>';
+  }
+  function renderStore() {
+    $('store').textContent = mode === 'db'
+      ? 'السجل محفوظ مع الصفحة، ويظهر على أي جهاز تفتح منه نفس الرابط.'
+      : 'السجل محفوظ على هذا الجهاز فقط.';
+  }
+  function offerLast() {
+    if (!entries.length) { $('lastRow').hidden = true; return; }
+    var last = entries[0];
+    $('lastRow').hidden = false;
+    $('useLast').textContent = 'استخدم آخر سعر محفوظ كسعر قديم (' + fmt(last.new, 2) + ')';
+    if (!touched) {
+      $('old').value = String(last.new); $('new').value = '';
+      $('hint').textContent = 'السعر القديم هو آخر سعر جديد حفظته. أدخل سعر الدولار الجديد.';
+      renderCalc();
+    }
+  }
+  function afterEntries() { renderLog(); offerLast(); renderStore(); }
+
+  function localLoad() {
+    try { entries = JSON.parse(localStorage.getItem('usd-rate-log') || '[]'); } catch (e) { entries = []; }
+    entries.sort(function (a, b) { return b.at - a.at; });
+  }
+  function localSave() { try { localStorage.setItem('usd-rate-log', JSON.stringify(entries)); } catch (e) {} }
+
+  function removeEntry(en) {
+    if (mode === 'db') {
+      db.doc('rates/' + en.id).delete().then(function () { toast('تم حذف السجل'); }, function () { toast('تعذر الحذف'); });
+    } else {
+      entries = entries.filter(function (x) { return x.id !== en.id; }); localSave(); afterEntries(); toast('تم حذف السجل');
+    }
+  }
+  function saveEntry() {
+    var r = rate(); if (!r || saving) return;
+    var at = Date.now();
+    var rec = { at: at, old: r.o, new: r.n, exact: r.exact, applied: r.applied, dp: dp, note: $('note').value.trim() };
+    saving = true;
+    if (mode === 'db') {
+      db.doc('rates/' + at).set(rec).then(function () {
+        saving = false; $('note').value = ''; touched = false; toast('تم الحفظ في السجل');
+      }, function (e) {
+        saving = false; toast(e && e.code === 'invalid_argument' ? 'ليس لديك صلاحية الحفظ في هذه الصفحة' : 'تعذر الحفظ');
+      });
+    } else {
+      rec.id = String(at); entries.unshift(rec); localSave(); saving = false;
+      $('note').value = ''; touched = false; afterEntries(); toast('تم الحفظ على هذا الجهاز');
+    }
+  }
+
+  /* ---------- events ---------- */
+  ['old', 'new'].forEach(function (id) {
+    $(id).addEventListener('input', function () { touched = true; $('hint').textContent = ''; renderCalc(); });
+  });
+  ['price', 'bulk'].forEach(function (id) { $(id).addEventListener('input', renderImpact); });
+  $('step').addEventListener('change', renderImpact);
+  $('save').addEventListener('click', saveEntry);
+  $('useLast').addEventListener('click', function () {
+    if (!entries.length) return;
+    touched = true; $('old').value = String(entries[0].new); $('new').value = ''; $('hint').textContent = ''; renderCalc(); $('new').focus();
+  });
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      dp = Number(b.getAttribute('data-dp'));
+      document.querySelectorAll('.seg button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      renderCalc();
+    });
+  });
+  $('copy').addEventListener('click', function () {
+    var r = rate(); if (!r) return;
+    var text = pctString(r.applied);
+    function fallback() {
+      var rg = document.createRange(); rg.selectNodeContents($('pctText'));
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(rg);
+      toast('حدد الرقم وانسخه يدوياً');
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { toast('تم نسخ ' + text + '%'); }, fallback);
+    } catch (e) { fallback(); }
+  });
+
+  /* ---------- boot ---------- */
+  renderCalc(); renderLog(); renderStore();
+  function startLocal() { mode = 'local'; localLoad(); afterEntries(); }
+  var usePromise = (window.claude && window.claude.use) ? window.claude.use('db') : Promise.resolve(null);
+  usePromise.then(function (d) {
+    if (!d) { startLocal(); return; }
+    db = d; mode = 'db';
+    try {
+      db.collection('rates').orderBy('at', 'desc').limit(300).onSnapshot(function (snap) {
+        entries = snap.docs.map(function (x) { var v = x.data(); v.id = x.id; return v; });
+        afterEntries();
+      }, function () { startLocal(); });
+    } catch (e) { startLocal(); }
+  }, startLocal);
+})();
+</script>

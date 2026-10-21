@@ -140,6 +140,9 @@ body{padding:0!important;margin:0;overflow:hidden;background:var(--app)}
 .hub{max-width:none}.bezel{padding:0;border-radius:0;box-shadow:none;background:none}
 .screen{border-radius:0;width:100vw;height:100vh;aspect-ratio:auto}
 .ex{display:none}
+html,body{-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+.board{font-weight:500}
+.di img,.board img{image-rendering:auto}
 </style>
 </head>
 <body>
@@ -293,7 +296,7 @@ function sim(){
   if(!ITEMS.filter(need).length){ITEMS.forEach(i=>{if(i.tay>0&&i.sku!=='AZ-4403'&&i.sku!=='AZ-1104'){i.main=0}});step=0}
   $('upd').textContent='آخر تحديث: الآن';setTimeout(draw,460);
 }
-function fit(){const s=$('scr'),k=Math.min(s.clientWidth/1024,s.clientHeight/600);$('board').style.transform=`scale(${k})`}
+function fit(){const s=$('scr'),b=$('board'),k=Math.min(s.clientWidth/1024,s.clientHeight/600);if(CSS.supports&&CSS.supports('zoom','1')){b.style.transform='none';b.style.zoom=k}else{b.style.transform=`scale(${k})`}}
 addEventListener('resize',fit);fit();draw();tick();setInterval(tick,15000);startRot();
 if(!matchMedia('(prefers-reduced-motion: reduce)').matches)setInterval(sim,6000);
 </script>

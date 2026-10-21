@@ -25,7 +25,7 @@ h1{font-family:var(--display);font-size:1.35rem;margin:0 0 4px}
 .bezel{background:#eae6e1;border-radius:22px;padding:3.5%;box-shadow:0 20px 40px #0009}
 .screen{position:relative;aspect-ratio:1024/600;border-radius:8px;overflow:hidden;background:var(--app)}
 .base{width:66%;height:30px;margin:-6px auto 0;background:repeating-linear-gradient(90deg,#cfc9c2 0 3px,#d9d3cc 3px 6px);border-radius:0 0 40px 40px}
-.board{position:absolute;top:0;right:0;width:1024px;height:600px;transform-origin:top right;padding:18px 22px;box-sizing:border-box;display:grid;grid-template-rows:auto 1fr auto;gap:14px;font-size:16px}
+.board{position:absolute;top:0;right:0;width:820px;height:480px;transform-origin:top right;padding:18px 22px;box-sizing:border-box;display:grid;grid-template-rows:auto 1fr auto;gap:14px;font-size:16px}
 .bh{display:flex;justify-content:space-between;align-items:center}
 .bh .t{font-family:var(--display);font-weight:700;font-size:24px;display:flex;align-items:center;gap:12px}
 .live{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--ok);background:#7fd19b1a;border-radius:99px;padding:4px 10px;font-family:var(--body)}
@@ -141,7 +141,13 @@ body{padding:0!important;margin:0;overflow:hidden;background:var(--app)}
 .screen{border-radius:0;width:100vw;height:100vh;aspect-ratio:auto}
 .ex{display:none}
 html,body{-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
-.board{font-weight:500}
+.board{font-weight:500;padding:12px 16px;gap:10px}
+.down>p{display:none}
+.main{grid-template-columns:1.9fr 1fr!important;gap:10px!important}
+.di .route,.di .sct,.di small{display:none!important}
+.di b{font-size:16px!important;line-height:1.25}
+.di img,.di .ph{width:52px!important;height:52px!important}
+.fi{font-size:13px!important;padding:5px 0!important}
 .di img,.board img{image-rendering:auto}
 </style>
 </head>
@@ -296,7 +302,7 @@ function sim(){
   if(!ITEMS.filter(need).length){ITEMS.forEach(i=>{if(i.tay>0&&i.sku!=='AZ-4403'&&i.sku!=='AZ-1104'){i.main=0}});step=0}
   $('upd').textContent='آخر تحديث: الآن';setTimeout(draw,460);
 }
-function fit(){const s=$('scr'),b=$('board'),k=Math.min(s.clientWidth/1024,s.clientHeight/600);if(CSS.supports&&CSS.supports('zoom','1')){b.style.transform='none';b.style.zoom=k}else{b.style.transform=`scale(${k})`}}
+function fit(){const s=$('scr'),b=$('board'),k=Math.min(s.clientWidth/820,s.clientHeight/480);if(CSS.supports&&CSS.supports('zoom','1')){b.style.transform='none';b.style.zoom=k}else{b.style.transform=`scale(${k})`}}
 addEventListener('resize',fit);fit();draw();tick();setInterval(tick,15000);startRot();
 if(!matchMedia('(prefers-reduced-motion: reduce)').matches)setInterval(sim,6000);
 </script>
